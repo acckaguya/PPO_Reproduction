@@ -19,31 +19,30 @@ def compute_rewards(reward_model, reward_tokenizer, policy_tokenizer, prompts, r
         rewards: 每个响应的奖励值 [batch]
     """
 
+    # 将响应token解码为文本
     decoded_responses = []
     for resp in responses:
-        valid_tokens = resp[resp != 0]
+        valid_tokens = resp[resp != 0]  # 跳过填充token
         text = policy_tokenizer.decode(valid_tokens, skip_special_tokens=True)
         decoded_responses.append(text)
-    #将提示和响应拼接成对话
-    full_texts = [f"{prompt} {response}" for prompt, response in zip(prompts, decoded_responses)]
-
-
-    #准备奖励模型的输入
+    
+    # 拼接提示和响应
+    full_texts = [f"{p} {r}" for p, r in zip(prompts, decoded_responses)]
+    
+    # 使用奖励模型的tokenizer编码
     inputs = reward_tokenizer(
         full_texts,
         padding=True,
         truncation=True,
         max_length=config.MAX_SEQ_LEN,
         return_tensors="pt",
-         return_token_type_ids=False
+        return_token_type_ids=False
     ).to(config.DEVICE)
-
-
-    #计算奖励
+    
+    # 计算奖励
     with torch.no_grad():
         rewards = reward_model(**inputs)
-
-
+    
     return rewards
 
 def add_kl_penalty(log_probs_policy, log_probs_ref, kl_coef=config.KL_COEF):

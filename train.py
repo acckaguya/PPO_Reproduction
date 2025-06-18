@@ -88,20 +88,26 @@ def main():
                 # 只在序列最后位置分配奖励
                 step_rewards[i, resp_lengths[i]-1] = rewards[i]
             
-            # 6. 估计值函数
+            # 6. 构建完整序列，并计算价值
+            full_ids = torch.cat([input_ids, response_ids], dim=1)
+            full_attention_mask = torch.cat([attention_mask, torch.ones_like(response_ids)], dim=1)
             with torch.no_grad():
-                # 估计序列最后位置的值
-                last_values = value_model(
-                    input_ids[:, -1].unsqueeze(1),  # 使用最后一个输入token
-                    attention_mask[:, -1].unsqueeze(1)
-                )
+                # 获取完整序列所有位置的价值
+                all_values = value_model(full_ids, full_attention_mask)
+                
+                # 提取关键价值
+                prompt_len = input_ids.size(1)
+                # 响应部分价值: [batch_size, resp_length]
+                step_values = all_values[:, prompt_len-1:prompt_len + response_ids.size(1)-1]
+                # 最终状态价值: [batch_size]
+                last_values = all_values[:, -1]
             
             # 7. 计算优势函数和回报
             advantages, returns = compute_advatages(
-                step_rewards, 
-                log_probs,  # 临时作为占位符
-                resp_masks, 
-                last_values
+                step_rewards,
+                step_values,      # 响应序列的状态价值
+                resp_masks,
+                last_values       # 最终状态价值
             )
             
             # 8. 标准化优势函数

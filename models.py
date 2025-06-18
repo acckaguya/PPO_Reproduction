@@ -68,15 +68,16 @@ class ValueModel(nn.Module):
 
 
     def forward(self, input_ids, attention_mask=None):
-        #只返回序列最后一个隐藏状态
-        outputs = self.transformer(input_ids, attention_mask=attention_mask,output_hidden_states=True)
+        #返回所有位置的价值
+        outputs = self.transformer(
+            input_ids, 
+            attention_mask=attention_mask,
+            output_hidden_states=True
+        )
         hidden_states = outputs.hidden_states[-1]
-        #last_hidden_state 形状为 [batch_size, sequence_length, hidden_size]
-        
-        #取序列的最后一个 token（-1 索引）的隐藏状态,​​输出形状​​: [batch_size, hidden_size]
-        last_token_hidden = hidden_states[:, -1, :]
-        values = self.value_head(last_token_hidden).squeeze(-1)
-        return values
+        #价值头应用到每个位置 [batch_size, seq_len]
+        values = self.value_head(hidden_states).squeeze(-1)
+        return values  #形状:[batch_size, seq_len]
     
 
 class RewardModel(nn.Module):
