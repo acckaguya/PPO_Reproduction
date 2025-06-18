@@ -25,7 +25,7 @@ class PPOTrainer:
         执行一个PPO训练步骤
         
         参数:
-            batch: 包含输入、响应、日志概率和值的字典
+            batch: 包含输入、响应、概率和值的字典
         
         返回:
             loss_dict: 包含各项损失的字典

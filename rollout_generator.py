@@ -40,7 +40,7 @@ def generate_rollout(policy_model, input_ids, attention_mask):
         #获取下一个token的概率
         with torch.no_grad():
             outputs = policy_model(current_input, attention_mask=attention_mask)
-            logits = outputs.logits[:, -1, :] #获取最后一个token的logits
+            logits = outputs.logits[:, -1, :] #获取最后一个token的logits[batch_size, vocab_size],相当于获取策略的分布
 
         #应用采样参数
         logits = logits / config.TEMPERATURE
@@ -68,8 +68,8 @@ def generate_rollout(policy_model, input_ids, attention_mask):
             logits[indices_to_remove] = float('-inf')
 
         #概率归一化，将logits转为概率分布
-        probs = F.softmax(logits, dim=-1)
-        tokens = torch.multinomial(probs, 1).squeeze(1) #形状从 [batch_size, 1] 压缩为 [batch_size]
+        probs = F.softmax(logits, dim=-1)               #probs[batch_size, vocab_size]
+        tokens = torch.multinomial(probs, 1).squeeze(1) #multinomial根据probs随机采样一个token，并让形状从 [batch_size, 1] 压缩为 [batch_size]，即每个样本一个token ID
 
         #结果
         response_tokens[:, step] = tokens
@@ -78,9 +78,6 @@ def generate_rollout(policy_model, input_ids, attention_mask):
 
         #更新用于下一步
         current_input = torch.cat([current_input, tokens.unsqueeze(1)], dim=1)
-        attention_mask = torch.cat([
-            attention_mask,
-            torch.ones((batch_size,1), device=config.DEVICE)
-        ], dim=1)
+        attention_mask = torch.cat([attention_mask, torch.ones((batch_size,1), device=config.DEVICE)], dim=1)
 
     return response_tokens, log_probs, attention_mask

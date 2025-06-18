@@ -21,8 +21,8 @@ class PromptDataset(Dataset):
 
 def load_prompts(file_path):
     with open (file_path, 'r', encoding='utf-8') as f:
-        prompts = [line.strip() for line in f if line.strip()]
-
+        prompts = [line.strip() for line in f if line.strip()]  #返回一个list[str]
+    
     return prompts
 
 def create_dataloader(prompts, batch_size):
