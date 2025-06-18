@@ -4,13 +4,14 @@ from config import Config
 config = Config()
 
 
-def compute_rewards(reward_model, reward_tokenizer, prompts, responses):
+def compute_rewards(reward_model, reward_tokenizer, policy_tokenizer, prompts, responses):
     """
     使用奖励模型计算完整响应的奖励
     
     参数:
         reward_model: 奖励模型
         reward_tokenizer: 奖励模型的tokenizer
+        policy_tokenizer: 策略模型的tokenizer
         prompts: 原始提示列表
         responses: 生成的响应token列表
     
@@ -18,9 +19,13 @@ def compute_rewards(reward_model, reward_tokenizer, prompts, responses):
         rewards: 每个响应的奖励值 [batch]
     """
 
-
+    decoded_responses = []
+    for resp in responses:
+        valid_tokens = resp[resp != 0]
+        text = policy_tokenizer.decode(valid_tokens, skip_special_tokens=True)
+        decoded_responses.append(text)
     #将提示和响应拼接成对话
-    full_texts = [f"{p} {r}" for p, r in zip(prompts, responses)]
+    full_texts = [f"{prompt} {response}" for prompt, response in zip(prompts, decoded_responses)]
 
 
     #准备奖励模型的输入

@@ -77,6 +77,7 @@ def main():
             rewards = compute_rewards(
                 reward_model, 
                 reward_tokenizer,
+                policy_tokenizer,
                 batch_prompts,
                 response_ids
             )
