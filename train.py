@@ -82,7 +82,7 @@ def main():
                 response_ids
             )
             
-            # 5. 扩展奖励到每个时间步 (稀疏奖励)
+            # 5. 扩展奖励到每个状态，本例中使用稀疏奖励，即完整生成response后才计算reward (稀疏奖励)
             step_rewards = torch.zeros_like(log_probs)
             for i in range(step_rewards.size(0)):
                 # 只在序列最后位置分配奖励
